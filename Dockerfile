@@ -1,12 +1,11 @@
-# Start from the official Airflow image
-FROM apache/airflow:2.8.1
+FROM python:3.11-slim
 
-# Switch to root to avoid permission issues during build, then switch back
-USER root
-RUN apt-get update && apt-get install -y --no-install-recommends git 
+# Install git
+RUN apt-get update && apt-get install -y git
 
-USER airflow
+# Install ClickHouse driver and dbt
+RUN pip install --no-cache-dir dbt-core dbt-clickhouse clickhouse-connect
 
-# Copy and install Python requirements
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# keep working dir minimal; volumes will handle your project
+WORKDIR /dbt
+ENTRYPOINT ["bash"]

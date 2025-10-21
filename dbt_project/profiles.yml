@@ -5,7 +5,8 @@ citibike_weather:
       type: clickhouse
       schema: default
       host: clickhouse-server
-      port: 9000
-      user: "{{ env_var('CLICKHOUSE_USER', 'default') }}"
-      password: "{{ env_var('CLICKHOUSE_PASSWORD', '') }}"
+      port: 8123
+      user: "{{ env_var('CLICKHOUSE_USER') }}"
+      password: "{{ env_var('CLICKHOUSE_PASSWORD') }}"
       secure: false
+      database: default
