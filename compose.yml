@@ -39,7 +39,10 @@ services:
 
   # --- Airflow Webserver ---
   airflow-webserver:
-    image: apache/airflow:2.8.1
+    #image: apache/airflow:2.8.1
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
     container_name: airflow-webserver
     command: webserver
     environment:
@@ -60,7 +63,10 @@ services:
 
   # --- Airflow Scheduler ---
   airflow-scheduler:
-    image: apache/airflow:2.8.1
+    #image: apache/airflow:2.8.1
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
     container_name: airflow-scheduler
     command: scheduler
     environment:
@@ -77,20 +83,31 @@ services:
 
   # --- Airflow DB initialization & user setup ---
   airflow-init:
-    image: apache/airflow:2.8.1
+    #image: apache/airflow:2.8.1
+    build:
+      context: .
+      dockerfile: Dockerfile.airflow
     container_name: airflow-init
     entrypoint: /bin/bash
     command:
       - -c
-      - |
-        airflow db init
+      - >
+        airflow db init &&
         airflow users create \
           --username airflow \
           --password airflow \
           --firstname Admin \
           --lastname User \
           --role Admin \
-          --email admin@example.com
+          --email admin@example.com &&
+        airflow connections add clickhouse_default \
+            --conn-type sqlite \
+            --conn-host clickhouse-server \
+            --conn-port 9000 \
+            --conn-login admin \
+            --conn-password '' \
+            --conn-schema default \
+            --conn-extra '{"secure": false}'
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
