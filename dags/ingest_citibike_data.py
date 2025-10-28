@@ -4,6 +4,7 @@ from airflow.sensors.http_sensor import HttpSensor
 from airflow.utils.dates import days_ago
 from airflow_clickhouse_plugin.hooks.clickhouse import ClickHouseHook
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import pandas as pd
 import requests
 import zipfile
@@ -18,7 +19,8 @@ def get_file_name(execution_date: datetime) -> str:
     # The monthly trip data bucket links are in the following format:
     # https://s3.amazonaws.com/tripdata/YYYYMM-citibike-tripdata.zip
     # Returns the correct file name for the execution date
-    return f"{execution_date.strftime('%Y%m')}-citibike-tripdata.zip"
+    prev_month = execution_date - relativedelta(months=1)
+    return f"{prev_month.strftime('%Y%m')}-citibike-tripdata.zip"
 
 def download_and_extract(**context) -> None:
     execution_date = context['logical_date']
