@@ -2,7 +2,7 @@
 project repository of Data Engineering course
 
 ## Environment variables
-Copy `.env.example` to `.env` and fill in your own values:
+Copy `.env.example` to `.env` and fill in your own values if needed (default values are provided):
 ```bash
 cp .env.example .env
 ```

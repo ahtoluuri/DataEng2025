@@ -3,13 +3,15 @@ services:
   airflow-db:
     container_name: airflow-db
     image: postgres:16.4
-    environment:
-      POSTGRES_USER: airflow
-      POSTGRES_PASSWORD: airflow
-      POSTGRES_DB: airflow
-      PGUSER: airflow
-      PGPASSWORD: airflow
-      PGDATABASE: airflow
+    env_file:
+      - .env
+    # environment:
+    #   POSTGRES_USER: airflow
+    #   POSTGRES_PASSWORD: airflow
+    #   POSTGRES_DB: airflow
+    #   PGUSER: airflow
+    #   PGPASSWORD: airflow
+    #   PGDATABASE: airflow
     ports:
       - "5432:5432"
     volumes:
@@ -24,10 +26,12 @@ services:
   pgadmin:
     container_name: pgadmin
     image: elestio/pgadmin:REL-8_10
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@example.com
-      PGADMIN_DEFAULT_PASSWORD: admin
-      CSRF_ENABLED: "False"
+    env_file:
+      - .env
+    #environment:
+    #  PGADMIN_DEFAULT_EMAIL: admin@example.com
+    #  PGADMIN_DEFAULT_PASSWORD: admin
+    #  CSRF_ENABLED: "False"
     ports:
       - "5050:80"
     depends_on:
@@ -102,10 +106,10 @@ services:
     container_name: clickhouse-server
     env_file:
       - .env
-    environment:
-      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
-      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
-      CLICKHOUSE_DB: ${CLICKHOUSE_DB}
+    # environment:
+    #   CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+    #   CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+    #   CLICKHOUSE_DB: ${CLICKHOUSE_DB}
     ports:
       - "8123:8123" # HTTP interface
       - "9000:9000" # Native client interface
