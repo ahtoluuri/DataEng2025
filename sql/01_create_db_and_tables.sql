@@ -5,8 +5,8 @@ CREATE TABLE IF NOT EXISTS citibike.raw_citibike_trips
 (
     ride_id String,
     rideable_type String,
-    started_at DateTime,
-    ended_at DateTime,
+    started_at DateTime64(3),
+    ended_at DateTime64(3),
     start_station_name String,
     start_station_id String,
     end_station_name String,
