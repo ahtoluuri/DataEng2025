@@ -17,8 +17,8 @@ CREATE TABLE IF NOT EXISTS citibike.raw_citibike_trips
     end_lng Decimal(9,6),
     member_casual String,
     loaded_at DateTime DEFAULT now()
-) ENGINE = MergeTree
-PARTITION BY toYYYYMM(loaded_at)
-ORDER BY (started_at);
+) ENGINE = ReplacingMergeTree(loaded_at)
+PARTITION BY toYYYYMM(started_at)
+ORDER BY (ride_id);
 
 -- CREATE TABLE IF NOT EXISTS citibike.raw_weather
