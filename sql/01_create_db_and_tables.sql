@@ -1,4 +1,4 @@
-DROP DATABASE citibike;
+DROP DATABASE IF EXISTS citibike;
 CREATE DATABASE IF NOT EXISTS citibike;
 
 CREATE TABLE IF NOT EXISTS citibike.raw_citibike_trips

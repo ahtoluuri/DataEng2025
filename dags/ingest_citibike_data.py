@@ -1,6 +1,5 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.sensors.http_sensor import HttpSensor
 from airflow.utils.dates import days_ago
 from airflow_clickhouse_plugin.hooks.clickhouse import ClickHouseHook
 from datetime import datetime
@@ -24,10 +23,10 @@ def get_file_name(execution_date: datetime) -> str:
 
 def download_and_extract(**context) -> None:
     execution_date = context['logical_date']
-    file_name = get_file_name(execution_date)
-    url = CITIBIKE_BASE_URL + file_name
+    #file_name = get_file_name(execution_date)
+    #url = CITIBIKE_BASE_URL + file_name
     # URL for testing
-    #url = "https://s3.amazonaws.com/tripdata/JC-202509-citibike-tripdata.csv.zip"
+    url = "https://s3.amazonaws.com/tripdata/JC-202509-citibike-tripdata.csv.zip"
     print(f"Downloading {url}")
     response = requests.get(url)
     response.raise_for_status()
@@ -48,17 +47,21 @@ def download_and_extract(**context) -> None:
     context['ti'].xcom_push(key='csv_path', value=tmp_path)
     print(f"Saved merged CSV to {tmp_path}")
 
+# This is slow, but only got this to work
 def load_to_clickhouse(**context):
     file_path = context['ti'].xcom_pull(key='csv_path', task_ids='download_and_extract')
     df = pd.read_csv(file_path)
     hook = ClickHouseHook(clickhouse_conn_id=CLICKHOUSE_CONN_ID)
-
+    
+    print("Converting date data types")
     df['started_at'] = pd.to_datetime(df['started_at']).dt.to_pydatetime()
     df['ended_at'] = pd.to_datetime(df['ended_at']).dt.to_pydatetime()
 
+    print("Filling missing values for string columns")
     for col in ['ride_id', 'rideable_type', 'start_station_name', 'start_station_id', 'end_station_name', 'end_station_id', 'member_casual']:
         df[col] = df[col].fillna("").astype(str)
 
+    print("Filling missing values for numeric columns")
     for col in ['start_lat', 'start_lng', 'end_lat', 'end_lng']:
         df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
 
@@ -73,7 +76,7 @@ def load_to_clickhouse(**context):
             member_casual
         ) VALUES
     """
-
+    print("Creating tuples")
     data = [tuple(x) for x in df.to_numpy()]
     print(f"Inserting {len(df)} rows into {TABLE_NAME}")
     hook.execute(insert_sql, data)
@@ -113,5 +116,4 @@ with DAG(
         python_callable=check_is_ride_id_null
     )
 
-    #check_source >> 
     download_and_extract_task >> load_data >> quality_check
