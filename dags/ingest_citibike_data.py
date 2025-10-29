@@ -8,7 +8,6 @@ import pandas as pd
 import requests
 import zipfile
 import io
-import requests
 
 
 CITIBIKE_BASE_URL: str = "https://s3.amazonaws.com/tripdata/"
@@ -105,11 +104,21 @@ def check_is_ride_id_null(**context):
     result = hook.execute(query)
     null_count = result[0][0]
     if null_count > 0:
-        print(f"Data quality check failed: {null_count} NULL ride_id values found")
+        print(f"Data quality check: {null_count} NULL ride_id values found")
         hook.execute(f"ALTER TABLE {TABLE_NAME} DELETE WHERE ride_id IS NULL")
         #raise ValueError(f"Data quality check failed: {null_count} NULL ride_id values found")
     else:
         print("No NULL ride_id values found")
+
+def check_is_end_station_id_null(**context):
+    hook = ClickHouseHook(clickhouse_conn_id=CLICKHOUSE_CONN_ID)
+    query = f"SELECT COUNT(*) FROM {TABLE_NAME} WHERE end_station_id = ''"
+    result = hook.execute(query)
+    null_count = result[0][0]
+    if null_count > 0:
+        print(f"Data quality check: {null_count} missing end_station_id values found")
+        hook.execute(f"ALTER TABLE {TABLE_NAME} DELETE WHERE end_station_id = ''")
+        print("Removed rows where end_station_id is missing")
 
 with DAG(
     dag_id='citibike_monthly_ingest',
@@ -129,9 +138,14 @@ with DAG(
         provide_context=True
     )
 
-    quality_check = PythonOperator(
-        task_id='quality_check',
+    check_ride_id_null = PythonOperator(
+        task_id='check_ride_id_null',
         python_callable=check_is_ride_id_null
     )
 
-    download_and_extract_task >> load_data >> quality_check
+    check_end_station_id_null = PythonOperator(
+        task_id='check_end_station_id_null',
+        python_callable=check_is_end_station_id_null
+    )
+
+    download_and_extract_task >> load_data >> check_ride_id_null >> check_end_station_id_null
