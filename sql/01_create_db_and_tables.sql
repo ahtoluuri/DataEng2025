@@ -21,4 +21,19 @@ CREATE TABLE IF NOT EXISTS citibike.raw_citibike_trips
 PARTITION BY toYYYYMM(started_at)
 ORDER BY (ride_id);
 
--- CREATE TABLE IF NOT EXISTS citibike.raw_weather
+CREATE TABLE IF NOT EXISTS citibike.raw_weather
+(
+    observation_time DateTime,
+    temperature Float32,
+    apparent_temperature Float32,
+    relative_humidity_2m Float32,
+    precipitation_probability Float32,
+    precipitation_mm Float32,
+    cloud_coverage Float32,
+    uv_index Float32,
+    wind_speed_10m Float32,
+    wind_direction_deg Float32,
+    loaded_at DateTime DEFAULT now()
+) ENGINE = ReplacingMergeTree(loaded_at)
+PARTITION BY toYYYYMM(observation_time)
+ORDER BY (observation_time)
