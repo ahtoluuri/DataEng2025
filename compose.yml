@@ -166,3 +166,4 @@ services:
 
 volumes:
   pgdata_airflow:
+  clickhouse_data:
