@@ -132,7 +132,7 @@ services:
       - "9000:9000" # Native client interface
     volumes:
       # This persists our database data on our local machine.
-      - ./clickhouse_data:/var/lib/clickhouse/
+      - clickhouse_data:/var/lib/clickhouse/
       # This makes our local CSVs available inside the container.
       - ./sample_data:/var/lib/clickhouse/user_files
       # mount SQL to run them via client
