@@ -3,10 +3,10 @@ citibike_weather:
   outputs:
     dev:
       type: clickhouse
-      schema: default
+      schema: citibike
       host: clickhouse-server
       port: 8123
-      user: "{{ env_var('CLICKHOUSE_USER') }}"
-      password: "{{ env_var('CLICKHOUSE_PASSWORD') }}"
-      secure: false
-      database: default
+      user: admin
+      password: ""
+      secure: False
+      threads: 4

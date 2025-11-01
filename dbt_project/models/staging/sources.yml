@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: citibike
+    schema: citibike
+    tables:
+      - name: raw_citibike_trips
+        description: "Raw Citibike trip data ingested via Airflow"
+      - name: raw_weather
+        description: "Raw weather data ingested via Airflow"
