@@ -77,40 +77,6 @@ def download_and_extract(**context) -> None:
     context['ti'].xcom_push(key='csv_path', value=tmp_path)
     print(f"Saved merged CSV to {tmp_path}")
 
-# This is slow
-# def load_to_clickhouse(**context):
-#     file_path = context['ti'].xcom_pull(key='csv_path', task_ids='download_and_extract')
-#     df = pd.read_csv(file_path)
-#     hook = ClickHouseHook(clickhouse_conn_id=CLICKHOUSE_CONN_ID)
-    
-#     print("Converting date data types")
-#     df['started_at'] = pd.to_datetime(df['started_at']).dt.to_pydatetime()
-#     df['ended_at'] = pd.to_datetime(df['ended_at']).dt.to_pydatetime()
-
-#     print("Filling missing values for string columns")
-#     for col in ['ride_id', 'rideable_type', 'start_station_name', 'start_station_id', 'end_station_name', 'end_station_id', 'member_casual']:
-#         df[col] = df[col].fillna("").astype(str)
-
-#     print("Filling missing values for numeric columns")
-#     for col in ['start_lat', 'start_lng', 'end_lat', 'end_lng']:
-#         df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-
-#     # Duplicate runs are inserted, but Clickhouse will optimize it eventually
-#     # just selecting shows all rows with duplicates, "select * from table_name FINAL" shows the most recent
-#     insert_sql = f"""
-#         INSERT INTO {TABLE_NAME} (
-#             ride_id, rideable_type, started_at, ended_at,
-#             start_station_name, start_station_id,
-#             end_station_name, end_station_id,
-#             start_lat, start_lng, end_lat, end_lng,
-#             member_casual
-#         ) VALUES
-#     """
-#     print("Creating tuples")
-#     data = [tuple(x) for x in df.to_numpy()]
-#     print(f"Inserting {len(df)} rows into {TABLE_NAME}")
-#     hook.execute(insert_sql, data)
-
 def load_to_clickhouse(**context):
     file_path = context['ti'].xcom_pull(key='csv_path', task_ids='download_and_extract')
 
