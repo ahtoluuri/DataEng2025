@@ -8,7 +8,6 @@ import pandas as pd
 import requests
 import zipfile
 import io
-from requests.exceptions import HTTPError
 
 CITIBIKE_BASE_URL: str = "https://s3.amazonaws.com/tripdata/"
 CLICKHOUSE_CONN_ID: str = "clickhouse_default"
@@ -18,29 +17,47 @@ def get_file_name(execution_date: datetime, months_ago=1) -> str:
     # The monthly trip data bucket links are in the following format:
     # https://s3.amazonaws.com/tripdata/YYYYMM-citibike-tripdata.zip
     # Returns the correct file name for the execution date
-    prev_month = execution_date - relativedelta(months=months_ago)
-    return f"{prev_month.strftime('%Y%m')}-citibike-tripdata.zip"
+    target_month = execution_date - relativedelta(months=months_ago)
+    return f"{target_month.strftime('%Y%m')}-citibike-tripdata.zip"
 
 def download_and_extract(**context) -> None:
     execution_date = context['logical_date']
+    hook = ClickHouseHook(clickhouse_conn_id=CLICKHOUSE_CONN_ID)
 
-    def try_download(months_ago: int) -> requests.Response:
-        file_name = get_file_name(execution_date, months_ago=months_ago)
+    for m in [1,2]:
+        check_month = (execution_date - relativedelta(months=m))
+        month_str = check_month.strftime('%Y%m')
+        print(f"Checking if data already exists for {month_str}")
+        query = f"""
+            SELECT COUNT(*) FROM {TABLE_NAME} WHERE toYYYYMM(started_at) = {month_str}
+        """
+        result = hook.execute(query)
+        count = result[0][0]
+        if count > 0:
+            print(f"Data for {month_str} already exists in {TABLE_NAME}. Skipping download.")
+            context['ti'].xcom_push(key='csv_path', value=None)
+            return
+    
+    response = None
+    downloaded_month = None
+
+    for m in [1,2]:
+        file_name = get_file_name(execution_date, months_ago=m)
         url = CITIBIKE_BASE_URL + file_name
         print(f"Trying to download {url}")
-        response = requests.get(url)
-        if response.status_code == 404:
-            raise FileNotFoundError(f"Data not found for {file_name}")
-        response.raise_for_status()
-        return response
-    # URL for testing
-    #url = "https://s3.amazonaws.com/tripdata/JC-202509-citibike-tripdata.csv.zip"
-    try:
-        response = try_download(1)
-    except (FileNotFoundError, HTTPError):
-        print("Previous month data not found, trying the month before that")
-        response = try_download(2)
-
+        r = requests.get(url)
+        if r.status_code == 200:
+            response = r
+            downloaded_month = execution_date - relativedelta(months=m)
+            break
+        elif r.status_code == 404:
+            print(f"Data not found for {file_name}, trying earlier month")
+        else:
+            r.raise_for_status()
+    
+    if response is None:
+        raise FileNotFoundError("No data found for the last 2 months.")
+   
     dfs = []
     with zipfile.ZipFile(io.BytesIO(response.content)) as z:
         csv_files = [n for n in z.namelist() if n.endswith('.csv') and not n.startswith('__MACOSX/')]
@@ -55,7 +72,7 @@ def download_and_extract(**context) -> None:
     #df['started_at'] = pd.to_datetime(df['started_at']).dt.strftime('%Y-%m-%d %H:%M:%S')
     #df['ended_at'] = pd.to_datetime(df['ended_at']).dt.strftime('%Y-%m-%d %H:%M:%S')
 
-    tmp_path = f"/tmp/citibike_trip_data_{execution_date.strftime('%Y%m')}.csv"
+    tmp_path = f"/tmp/citibike_trip_data_{downloaded_month.strftime('%Y%m')}.csv"
     df.to_csv(tmp_path, index=False)
     context['ti'].xcom_push(key='csv_path', value=tmp_path)
     print(f"Saved merged CSV to {tmp_path}")
@@ -96,6 +113,11 @@ def download_and_extract(**context) -> None:
 
 def load_to_clickhouse(**context):
     file_path = context['ti'].xcom_pull(key='csv_path', task_ids='download_and_extract')
+
+    if not file_path:
+        print("No new CSV file to load.")
+        return
+    
     url = "http://clickhouse-server:8123/"
     table = TABLE_NAME
     with open(file_path, 'rb') as f:
