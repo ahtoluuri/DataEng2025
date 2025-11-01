@@ -8,28 +8,38 @@ import pandas as pd
 import requests
 import zipfile
 import io
-
+from requests.exceptions import HTTPError
 
 CITIBIKE_BASE_URL: str = "https://s3.amazonaws.com/tripdata/"
 CLICKHOUSE_CONN_ID: str = "clickhouse_default"
 TABLE_NAME: str = "citibike.raw_citibike_trips"
 
-def get_file_name(execution_date: datetime) -> str:
+def get_file_name(execution_date: datetime, months_ago=1) -> str:
     # The monthly trip data bucket links are in the following format:
     # https://s3.amazonaws.com/tripdata/YYYYMM-citibike-tripdata.zip
     # Returns the correct file name for the execution date
-    prev_month = execution_date - relativedelta(months=1)
+    prev_month = execution_date - relativedelta(months=months_ago)
     return f"{prev_month.strftime('%Y%m')}-citibike-tripdata.zip"
 
 def download_and_extract(**context) -> None:
     execution_date = context['logical_date']
-    file_name = get_file_name(execution_date)
-    url = CITIBIKE_BASE_URL + file_name
+
+    def try_download(months_ago: int) -> requests.Response:
+        file_name = get_file_name(execution_date, months_ago=months_ago)
+        url = CITIBIKE_BASE_URL + file_name
+        print(f"Trying to download {url}")
+        response = requests.get(url)
+        if response.status_code == 404:
+            raise FileNotFoundError(f"Data not found for {file_name}")
+        response.raise_for_status()
+        return response
     # URL for testing
     #url = "https://s3.amazonaws.com/tripdata/JC-202509-citibike-tripdata.csv.zip"
-    print(f"Downloading {url}")
-    response = requests.get(url)
-    response.raise_for_status()
+    try:
+        response = try_download(1)
+    except (FileNotFoundError, HTTPError):
+        print("Previous month data not found, trying the month before that")
+        response = try_download(2)
 
     dfs = []
     with zipfile.ZipFile(io.BytesIO(response.content)) as z:
