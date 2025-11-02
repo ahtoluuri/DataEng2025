@@ -1,0 +1,70 @@
+version: 2
+
+models:
+  - name: Dim_Date
+    description: Date dimension table
+    columns:
+      - name: date_key
+        description: Primary key (YYYYMMDD format)
+        tests:
+          - unique
+          - not_null
+      - name: full_date
+        description: Full date value
+        tests:
+          - not_null
+      - name: is_holiday
+        description: Flag indicating if date is a holiday
+      
+  - name: Dim_Time
+    description: Time dimension table
+    columns:
+      - name: time_key
+        description: Primary key (HHMMSS format)
+        tests:
+          - unique
+          - not_null
+      
+  - name: Dim_Station
+    description: Station dimension table
+    columns:
+      - name: station_key
+        description: Surrogate key for station
+        tests:
+          - unique
+          - not_null
+      - name: station_id
+        description: Natural key from source system
+        tests:
+          - not_null
+      
+  - name: Dim_Weather
+    description: Weather dimension table
+    columns:
+      - name: weather_key
+        description: Surrogate key for weather conditions
+        tests:
+          - unique
+          - not_null
+      
+  - name: Fact_Bike_Trip
+    description: Fact table for bike trips
+    columns:
+      - name: trip_id
+        description: Unique trip identifier
+        tests:
+          - unique
+          - not_null
+      - name: date_key
+        description: Foreign key to Dim_Date
+        tests:
+          - not_null
+          - relationships:
+              to: ref('Dim_Date')
+              field: date_key
+      - name: start_station_key
+        description: Foreign key to Dim_Station (start)
+        tests:
+          - relationships:
+              to: ref('Dim_Station')
+              field: station_key
