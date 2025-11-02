@@ -118,6 +118,17 @@ def check_is_end_station_id_null(**context):
         hook.execute(f"ALTER TABLE {TABLE_NAME} DELETE WHERE end_station_id = ''")
         print("Removed rows where end_station_id is missing")
 
+def check_is_start_station_id_null(**context):
+    hook = ClickHouseHook(clickhouse_conn_id=CLICKHOUSE_CONN_ID)
+    query = f"SELECT COUNT(*) FROM {TABLE_NAME} WHERE start_station_id = ''"
+    result = hook.execute(query)
+    null_count = result[0][0]
+    if null_count > 0:
+        print(f"Data quality check: {null_count} missing start_station_id values found")
+        hook.execute(f"ALTER TABLE {TABLE_NAME} DELETE WHERE start_station_id = ''")
+        print("Removed rows where start_station_id is missing")
+
+
 with DAG(
     dag_id='citibike_monthly_ingest',
     description='Monthly ingestion of raw Citibike data into Clickhouse',
@@ -146,4 +157,9 @@ with DAG(
         python_callable=check_is_end_station_id_null
     )
 
-    download_and_extract_task >> load_data >> check_ride_id_null >> check_end_station_id_null
+    check_start_station_id_null = PythonOperator(
+        task_id='check_start_station_id_null',
+        python_callable=check_is_start_station_id_null
+    )
+
+    download_and_extract_task >> load_data >> check_ride_id_null >> check_end_station_id_null >> check_start_station_id_null
