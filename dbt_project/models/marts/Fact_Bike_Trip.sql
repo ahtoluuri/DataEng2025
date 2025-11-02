@@ -22,7 +22,7 @@ WITH numbered_trips AS (
     sqrt(pow(start_lat - end_lat, 2) + pow(start_lng - end_lng, 2)) * 111 AS trip_distance_km
   FROM {{ ref('stg_citibike_trips') }}
   {% if target.name == 'dev' %}
-  LIMIT 100000
+  LIMIT 10000000 --increase limit to 10 millions
   {% endif %}
 )
 

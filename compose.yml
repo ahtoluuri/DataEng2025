@@ -129,7 +129,7 @@ services:
     #   CLICKHOUSE_DB: ${CLICKHOUSE_DB}
     ports:
       - "8123:8123" # HTTP interface
-      - "9000:9000" # Native client interface
+      - "9001:9000" # Native client interface
     volumes:
       # This persists our database data on our local machine.
       - clickhouse_data:/var/lib/clickhouse/
