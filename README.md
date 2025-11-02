@@ -30,9 +30,11 @@ docker compose up airflow-init
 ```
 ## Airflow DAGs
 DAG citibike_monthly_ingest:
+
 <img width="1155" height="153" alt="image" src="https://github.com/user-attachments/assets/10ed9bcf-58cf-43f2-abd6-62ae1b5ce3e2" />
 
 DAG weather_monthly_ingest:
+
 <img width="647" height="153" alt="image" src="https://github.com/user-attachments/assets/b11d71ff-46ed-4db1-8c8f-0a780b7de3a2" />
 
 
