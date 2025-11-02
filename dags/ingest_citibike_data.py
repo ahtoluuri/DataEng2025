@@ -1,6 +1,7 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.utils.dates import days_ago
+from airflow.exceptions import AirflowSkipException
 from airflow_clickhouse_plugin.hooks.clickhouse import ClickHouseHook
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -8,6 +9,7 @@ import pandas as pd
 import requests
 import zipfile
 import io
+from data_assets import CITIBIKE_TRIPS_DATASET
 
 CITIBIKE_BASE_URL: str = "https://s3.amazonaws.com/tripdata/"
 CLICKHOUSE_CONN_ID: str = "clickhouse_default"
@@ -82,7 +84,7 @@ def load_to_clickhouse(**context):
 
     if not file_path:
         print("No new CSV file to load.")
-        return
+        raise AirflowSkipException("No new data detected; skipping load.")
     
     url = "http://clickhouse-server:8123/"
     table = TABLE_NAME
@@ -144,7 +146,8 @@ with DAG(
     load_data = PythonOperator(
         task_id='load_data',
         python_callable=load_to_clickhouse,
-        provide_context=True
+        provide_context=True,
+        outlets=[CITIBIKE_TRIPS_DATASET]
     )
 
     check_ride_id_null = PythonOperator(
@@ -162,4 +165,8 @@ with DAG(
         python_callable=check_is_start_station_id_null
     )
 
-    download_and_extract_task >> load_data >> check_ride_id_null >> check_end_station_id_null >> check_start_station_id_null
+    (download_and_extract_task
+        >> load_data
+        >> check_ride_id_null
+        >> check_end_station_id_null
+        >> check_start_station_id_null)

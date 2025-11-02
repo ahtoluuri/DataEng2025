@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 import pandas as pd
 import requests
+from data_assets import WEATHER_DATASET
 
 CLICKHOUSE_CONN_ID: str = "clickhouse_default"
 TABLE_NAME: str = "citibike.raw_weather"
@@ -88,7 +89,8 @@ with DAG(
     load_data_task = PythonOperator(
         task_id="load_weather_to_clickhouse",
         python_callable=load_to_clickhouse,
-        provide_context=True
+        provide_context=True,
+        outlets=[WEATHER_DATASET]
     )
     
     fetch_weather_task >> load_data_task
