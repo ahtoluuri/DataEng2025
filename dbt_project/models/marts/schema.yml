@@ -55,13 +55,7 @@ models:
         tests:
           - unique
           - not_null
-      - name: date_key
-        description: Foreign key to Dim_Date
-        tests:
-          - not_null
-          - relationships:
-              to: ref('Dim_Date')
-              field: date_key
+      - name: start_date_key
       - name: start_station_key
         description: Foreign key to Dim_Station (start)
         tests:

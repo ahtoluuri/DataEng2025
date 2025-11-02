@@ -7,7 +7,7 @@
 }}
 
 SELECT
-    row_number() OVER () AS weather_key,
+    toUInt32(toYYYYMMDD(observation_time) * 100 + toHour(observation_time)) AS weather_key,
     CASE
         WHEN apparent_temperature < 0 THEN 'Freezing'
         WHEN apparent_temperature BETWEEN 0 AND 10 THEN 'Cold'
@@ -34,6 +34,7 @@ SELECT
     END AS wind_category
 FROM {{ ref('stg_weather') }}
 GROUP BY 
+    toUInt32(toYYYYMMDD(observation_time) * 100 + toHour(observation_time)),
     apparent_temp, 
     humidity_category, 
     precipitation_probability, 
