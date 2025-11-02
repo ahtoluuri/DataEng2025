@@ -1,5 +1,5 @@
 # DataEng2025
-project repository of Data Engineering course
+Here you can find the instructions on how to run the Data Engineering 2025 project for team 11
 
 ## Environment variables
 Copy `.env.example` to `.env` and fill in your own values if needed (default values are provided):
