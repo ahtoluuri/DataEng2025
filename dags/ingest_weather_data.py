@@ -10,7 +10,7 @@ CLICKHOUSE_CONN_ID: str = "clickhouse_default"
 TABLE_NAME: str = "citibike.raw_weather"
 
 def get_date_range(execution_date: datetime):
-    start = (execution_date - relativedelta(months=1)).replace(day=1) - timedelta(days=1)
+    start = (execution_date - relativedelta(months=2)).replace(day=1) - timedelta(days=1)
     end = execution_date.replace(day=1) #- timedelta(days=1)
     return start.strftime("%Y-%m-%d"), end.strftime("%Y-%m-%d")
 
@@ -52,6 +52,17 @@ def fetch_weather(**context):
 def load_to_clickhouse(**context):
     file_path = context["ti"].xcom_pull(key="weather_csv_path", task_ids="fetch_weather")
     url = "http://clickhouse-server:8123/"
+
+    df = pd.read_csv(file_path)
+    start_date = df["observation_time"].min()
+    end_date = df["observation_time"].max()
+    delete_query = f"""
+        ALTER TABLE {TABLE_NAME}
+        DELETE WHERE observation_time >= toDateTime('{start_date}') AND observation_time <= toDateTime('{end_date}')
+    """
+    print(f"Deleting existing rows for {start_date} - {end_date}")
+    requests.post(url, params={"query": delete_query}, auth=("admin", ""))
+    
     with open(file_path, "rb") as f:
         r = requests.post(
             url + f"?query=INSERT INTO {TABLE_NAME} FORMAT CSVWithNames",

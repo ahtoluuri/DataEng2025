@@ -9,28 +9,55 @@ import requests
 import zipfile
 import io
 
-
 CITIBIKE_BASE_URL: str = "https://s3.amazonaws.com/tripdata/"
 CLICKHOUSE_CONN_ID: str = "clickhouse_default"
 TABLE_NAME: str = "citibike.raw_citibike_trips"
 
-def get_file_name(execution_date: datetime) -> str:
+def get_file_name(execution_date: datetime, months_ago=1) -> str:
     # The monthly trip data bucket links are in the following format:
     # https://s3.amazonaws.com/tripdata/YYYYMM-citibike-tripdata.zip
     # Returns the correct file name for the execution date
-    prev_month = execution_date - relativedelta(months=1)
-    return f"{prev_month.strftime('%Y%m')}-citibike-tripdata.zip"
+    target_month = execution_date - relativedelta(months=months_ago)
+    return f"{target_month.strftime('%Y%m')}-citibike-tripdata.zip"
 
 def download_and_extract(**context) -> None:
     execution_date = context['logical_date']
-    file_name = get_file_name(execution_date)
-    url = CITIBIKE_BASE_URL + file_name
-    # URL for testing
-    #url = "https://s3.amazonaws.com/tripdata/JC-202509-citibike-tripdata.csv.zip"
-    print(f"Downloading {url}")
-    response = requests.get(url)
-    response.raise_for_status()
+    hook = ClickHouseHook(clickhouse_conn_id=CLICKHOUSE_CONN_ID)
 
+    for m in [1,2]:
+        check_month = (execution_date - relativedelta(months=m))
+        month_str = check_month.strftime('%Y%m')
+        print(f"Checking if data already exists for {month_str}")
+        query = f"""
+            SELECT COUNT(*) FROM {TABLE_NAME} WHERE toYYYYMM(started_at) = {month_str}
+        """
+        result = hook.execute(query)
+        count = result[0][0]
+        if count > 0:
+            print(f"Data for {month_str} already exists in {TABLE_NAME}. Skipping download.")
+            context['ti'].xcom_push(key='csv_path', value=None)
+            return
+    
+    response = None
+    downloaded_month = None
+
+    for m in [1,2]:
+        file_name = get_file_name(execution_date, months_ago=m)
+        url = CITIBIKE_BASE_URL + file_name
+        print(f"Trying to download {url}")
+        r = requests.get(url)
+        if r.status_code == 200:
+            response = r
+            downloaded_month = execution_date - relativedelta(months=m)
+            break
+        elif r.status_code == 404:
+            print(f"Data not found for {file_name}, trying earlier month")
+        else:
+            r.raise_for_status()
+    
+    if response is None:
+        raise FileNotFoundError("No data found for the last 2 months.")
+   
     dfs = []
     with zipfile.ZipFile(io.BytesIO(response.content)) as z:
         csv_files = [n for n in z.namelist() if n.endswith('.csv') and not n.startswith('__MACOSX/')]
@@ -45,47 +72,18 @@ def download_and_extract(**context) -> None:
     #df['started_at'] = pd.to_datetime(df['started_at']).dt.strftime('%Y-%m-%d %H:%M:%S')
     #df['ended_at'] = pd.to_datetime(df['ended_at']).dt.strftime('%Y-%m-%d %H:%M:%S')
 
-    tmp_path = f"/tmp/citibike_trip_data_{execution_date.strftime('%Y%m')}.csv"
+    tmp_path = f"/tmp/citibike_trip_data_{downloaded_month.strftime('%Y%m')}.csv"
     df.to_csv(tmp_path, index=False)
     context['ti'].xcom_push(key='csv_path', value=tmp_path)
     print(f"Saved merged CSV to {tmp_path}")
 
-# This is slow
-# def load_to_clickhouse(**context):
-#     file_path = context['ti'].xcom_pull(key='csv_path', task_ids='download_and_extract')
-#     df = pd.read_csv(file_path)
-#     hook = ClickHouseHook(clickhouse_conn_id=CLICKHOUSE_CONN_ID)
-    
-#     print("Converting date data types")
-#     df['started_at'] = pd.to_datetime(df['started_at']).dt.to_pydatetime()
-#     df['ended_at'] = pd.to_datetime(df['ended_at']).dt.to_pydatetime()
-
-#     print("Filling missing values for string columns")
-#     for col in ['ride_id', 'rideable_type', 'start_station_name', 'start_station_id', 'end_station_name', 'end_station_id', 'member_casual']:
-#         df[col] = df[col].fillna("").astype(str)
-
-#     print("Filling missing values for numeric columns")
-#     for col in ['start_lat', 'start_lng', 'end_lat', 'end_lng']:
-#         df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-
-#     # Duplicate runs are inserted, but Clickhouse will optimize it eventually
-#     # just selecting shows all rows with duplicates, "select * from table_name FINAL" shows the most recent
-#     insert_sql = f"""
-#         INSERT INTO {TABLE_NAME} (
-#             ride_id, rideable_type, started_at, ended_at,
-#             start_station_name, start_station_id,
-#             end_station_name, end_station_id,
-#             start_lat, start_lng, end_lat, end_lng,
-#             member_casual
-#         ) VALUES
-#     """
-#     print("Creating tuples")
-#     data = [tuple(x) for x in df.to_numpy()]
-#     print(f"Inserting {len(df)} rows into {TABLE_NAME}")
-#     hook.execute(insert_sql, data)
-
 def load_to_clickhouse(**context):
     file_path = context['ti'].xcom_pull(key='csv_path', task_ids='download_and_extract')
+
+    if not file_path:
+        print("No new CSV file to load.")
+        return
+    
     url = "http://clickhouse-server:8123/"
     table = TABLE_NAME
     with open(file_path, 'rb') as f:

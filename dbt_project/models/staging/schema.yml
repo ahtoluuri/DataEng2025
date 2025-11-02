@@ -1,0 +1,12 @@
+version: 2
+
+sources:
+  - name: citibike
+    description: Raw citibike data
+    database: citibike
+    schema: citibike
+    tables:
+      - name: raw_citibike_trips
+        description: Raw bike trip data
+      - name: raw_weather
+        description: Raw weather data
