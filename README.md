@@ -1,45 +1,100 @@
-# DataEng2025
-Here you can find the instructions on how to run the Data Engineering 2025 project for team 11
+# DataEng2025 – Citi Bike Weather Insights
 
-## Environment variables
-Copy `.env.example` to `.env` and fill in your own values if needed (default values are provided):
-```bash
-cp .env.example .env
-```
+This repository contains a reproducible data platform that explains how New York City weather patterns shape Citi Bike ridership. The stack bundles ingestion, storage, transformation, and analytics tooling so stakeholders can explore demand drivers with minimal setup.
 
-## Run
-Start the necessary services
-```bash
-docker compose up -d
-```
-Create the tables
-```bash
-docker exec -it clickhouse-server clickhouse-client --multiquery --queries-file=/sql/01_create_db_and_tables.sql
-```
+## Project Overview
 
-[Clickhouse](http://localhost:8123)
+- **Goal:** quantify the impact of temperature, precipitation, and wind on Citi Bike usage across seasons and times of day.
+- **Primary users:** Citi Bike operations teams, data scientists and analysts, and NYC urban planners/policymakers.
+- **Key metrics:** average daily rides, weather-driven demand deltas, seasonal/hourly ridership variability, trip duration by precipitation type, and rider-type responsiveness to weather.
 
-[Airflow](http://localhost:8080)
+## Solution Architecture
 
-## Troubleshooting
-If Airflow can't be accessed, this might help:
-```bash
-mkdir logs dags plugins
-sudo chown 50000:0 logs dags plugins
-docker compose up airflow-init
-```
-## Airflow DAGs
+- **Sources:** Monthly Citi Bike trip archives from AWS S3 and hourly weather observations from the Open-Meteo API.
+- **Orchestration:** Apache Airflow (LocalExecutor) coordinates ingestion and downstream transformations inside Docker.
+- **Storage:** ClickHouse hosts the raw landing tables (`citibike.raw_citibike_trips`, `citibike.raw_weather`) and the analytic marts.
+- **Transformations:** dbt models (run inside a dedicated container) curate dimensional tables and a consolidated fact table for analysis-ready querying.
+- **Analytics:** Analysts can connect via the ClickHouse HTTP UI or execute prepared SQL in `sql/sample_queries.sql`.
+
+**Architecture diagram:**
+
+<img width="1235" height="598" alt="image" src="docs/architecture.png" />
+
+### Container Services
+
+| Service | Purpose | Port(s) |
+| --- | --- | --- |
+| `airflow-webserver`, `airflow-scheduler`, `airflow-db` | Orchestrate and persist Airflow metadata | 8080, 5432 |
+| `pgadmin` | Optional web UI for PostgreSQL metadata | 5050 |
+| `clickhouse-server` | Columnar warehouse for raw and transformed datasets | 8123 (HTTP), 9001 (native) |
+| `dbt` | Runs dbt commands against ClickHouse | n/a (exec via `docker exec`) |
+
+## Local Environment Setup
+
+1. **Clone repo & configure variables**
+   ```bash
+   cp .env.example .env
+   ```
+   Default credentials are sufficient for local usage.
+2. **Start the stack**
+   ```bash
+   docker compose up -d
+   ```
+3. **Create base schemas and raw tables**
+   ```bash
+   docker exec -it clickhouse-server clickhouse-client --multiquery --queries-file=/sql/01_create_db_and_tables.sql
+   ```
+4. **Confirm services**
+   ```bash
+   docker compose ps
+   ```
+   - **Airflow UI:** http://localhost:8080 (default user/password `airflow`/`airflow`)
+   - **ClickHouse UI:** http://localhost:8123
+
+
+## Operating the Pipeline
+
+### Airflow DAGs (`dags/`)
+
+| DAG | Schedule | Description |
+| --- | --- | --- |
+| `citibike_monthly_ingest` | `0 0 10 * *` | Downloads newest Citi Bike trip archive, loads CSVs to `citibike.raw_citibike_trips`, and runs basic data quality checks (e.g., missing station IDs). |
+| `weather_monthly_ingest` | `0 0 10 * *` | Pulls the prior two months of hourly weather metrics from Open-Meteo and upserts them into `citibike.raw_weather`. |
+| `dbt_transforms` | Data-driven | Listens to ClickHouse dataset updates and triggers `dbt run` followed by `dbt test`. |
+
 DAG citibike_monthly_ingest:
 
-<img width="1155" height="153" alt="image" src="https://github.com/user-attachments/assets/10ed9bcf-58cf-43f2-abd6-62ae1b5ce3e2" />
+<img width="1215" height="124" alt="image" src="docs/dag_citibike.png" />
 
 DAG weather_monthly_ingest:
 
-<img width="647" height="153" alt="image" src="https://github.com/user-attachments/assets/b11d71ff-46ed-4db1-8c8f-0a780b7de3a2" />
+<img width="503" height="127" alt="image" src="docs/dag_weather.png" />
+
+DAG DBT transformation:
+
+<img width="510" height="130" alt="image" src="docs/dag_dbt.png" />
+
+To backfill or test, trigger DAGs manually from the Airflow UI. The `dbt_transforms` DAG starts automatically once both raw datasets finish loading.
+
+### dbt Models (`dbt_project/models/`)
+
+- `staging/`: Lightweight cleaning layers for trips and weather datasets.
+- `marts/Dim_Date` & `Dim_Time`: Calendar and hour-of-day dimensions to support temporal analysis.
+- `marts/Dim_Station`: Cleans station metadata and coordinates.
+- `marts/Dim_Weather`: Categorises weather metrics (temperature bands, precipitation categories, wind tiers).
+- `marts/Fact_Bike_Trip`: Consolidated fact table joining rides with weather signals and station context.
+
+All models target the `citibike` ClickHouse database. Profiles are preconfigured in `dbt_project/profiles.yml` for the containerised runtime.
+
+## Exploring the Data
+
+- **SQL playground:** Navigate to http://localhost:8123/play and query the marts (e.g., `citibike.fact_bike_trip`).
+- **Sample queries:** `sql/sample_queries.sql` contains analytical prompts aligned with the KPIs.
+- **BI tools:** Connect any ClickHouse-compatible BI client using the HTTP interface (`admin` user, blank password by default).
 
 ## Results of analytical queries (limited to 10 rows)
 
-How do weather conditions impact daily and hourly ridership volumes?
+**How do weather conditions impact daily and hourly ridership volumes?**
 
 **Daily**
 
@@ -126,3 +181,27 @@ How do weather conditions impact daily and hourly ridership volumes?
 | Hot           | 18        | 63,984      |
 | Mild          | 8         | 236,007     |
 | Warm          | 17        | 452,201     |
+
+## Repository Layout
+
+```
+├── compose.yml                # Docker Compose stack
+├── dags/                      # Airflow DAG definitions
+├── dbt_project/               # dbt project (models, profiles, target)
+├── sql/                       # DDL and analytical SQL scripts
+├── sample_data/               # Optional seed files for local testing
+└── docs/                      # DAG diagrams and documentation assets
+```
+
+## Troubleshooting
+
+- Airflow permissions reset (only if UI fails to load):
+  ```bash
+  mkdir -p logs dags plugins
+  sudo chown 50000:0 logs dags plugins
+  docker compose up airflow-init
+  ```
+- Verify network access if API calls fail; the weather DAG logs the exact URL for quick manual testing.
+- Use `docker compose logs <service>` to inspect container output (e.g., `airflow-webserver`, `clickhouse-server`, `dbt`).
+
+With the stack running, you can iterate on DAGs, dbt models, and analytics confidently while delivering weather-aware insights to Citi Bike stakeholders.
