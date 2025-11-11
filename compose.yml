@@ -123,6 +123,8 @@ services:
     container_name: clickhouse-server
     env_file:
       - .env
+    environment:
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
     # environment:
     #   CLICKHOUSE_USER: ${CLICKHOUSE_USER}
     #   CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
