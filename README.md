@@ -218,6 +218,8 @@ Create Clickhouse service in OMD UI:
 + Password: omd_very_secret_password
 + Test connection, next, save
 
+![OpenMetadata tests](images/image.png)
+
 ## Troubleshooting
 
 - Airflow permissions reset (only if UI fails to load):
