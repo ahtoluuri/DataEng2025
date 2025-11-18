@@ -193,6 +193,31 @@ All models target the `citibike` ClickHouse database. Profiles are preconfigured
 └── docs/                      # DAG diagrams and documentation assets
 ```
 
+## OpenMetadata
+
+[OpenMetadata](http://localhost:8585/)
+
+Default user and password:
++ admin@open-metadata.org
++ admin
+
+Create a Clickhouse user for OpenMetadata
+
+```bash
+docker exec -it clickhouse-server clickhouse-client --multiquery --queries-file=/sql/task_3_omd_roles.sql
+```
+
+Create Clickhouse service in OMD UI:
+
++ Settings -> Services -> Databases
++ Add New Service
++ Service type: Clickhouse
++ Service name: e.g. clickhouse_warehouse
++ Host and Port: clickhouse-server:8123
++ Username: service_openmetadata
++ Password: omd_very_secret_password
++ Test connection, next, save
+
 ## Troubleshooting
 
 - Airflow permissions reset (only if UI fails to load):
