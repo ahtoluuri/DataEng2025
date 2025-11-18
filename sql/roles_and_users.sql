@@ -9,3 +9,4 @@ GRANT analyst_limited TO user_limited;
 
 GRANT SELECT ON dataeng.* TO user_full;
 GRANT SELECT ON dataeng.vw_trip_summary_masked TO user_limited;
+-- TODO: doesn't fully work

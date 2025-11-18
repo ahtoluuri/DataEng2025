@@ -21,10 +21,10 @@ SELECT
     f.trip_id,
     f.start_date_key,
     f.end_date_key,
-    MD5(s.station_name) AS start_station_name_masked,   
-    MD5(e.station_name) AS end_station_name_masked,
-    'rider' AS rider_type_masked,               
-    concat('*_', right(f.bike_type, 4)) as bike_type_masked,
+    s.station_name AS start_station_name_masked,   
+    e.station_name AS end_station_name_masked,
+    f.rider_type AS rider_type_masked,               
+    f.bike_type as bike_type_masked,
     f.trip_duration,
     w.apparent_temp,
     w.humidity_category,
@@ -33,3 +33,4 @@ FROM dataeng.Fact_Bike_Trip f
 LEFT JOIN dataeng.Dim_Station s ON f.start_station_key = s.station_key
 LEFT JOIN dataeng.Dim_Station e ON f.end_station_key = e.station_key
 LEFT JOIN dataeng.Dim_Weather w ON f.weather_key = w.weather_key;
+-- TODO: pseudonymization
