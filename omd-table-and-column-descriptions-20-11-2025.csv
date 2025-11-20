@@ -1,0 +1,105 @@
+name*,displayName,description,owner,tags,glossaryTerms,tiers,certification,retentionPeriod,sourceUrl,domains,extension,entityType*,fullyQualifiedName,column.dataTypeDisplay,column.dataType,column.arrayDataType,column.dataLength,storedProcedure.code,storedProcedure.language
+Dim_Date,,<p>Static dimension for dates. Provides calendar information for each day.</p>,,,,,,,,,,table,clickhouse_warehouse.default.dataeng.Dim_Date,,,,,,
+date_key,,"<p>Unique key representing the date (surrogate, YYYYMMDD), used as primary key to join with fact table.</p>",,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Date.date_key,uint32,INT,,1
+full_date,,<p>Actual date YYYY-MM-DD</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Date.full_date,date,DATE,,1
+day_of_week,,<p>The name of the day (e.g. Monday)</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Date.day_of_week,nullable<string>,STRING,,1
+day_of_week_num,,"<p>Numeric representation of the weekday (1=Monday, ..., 7=Sunday)</p>",,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Date.day_of_week_num,uint8,SMALLINT,,1
+is_holiday,,<p>Indicates whether the date is a public holiday (1/0)</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Date.is_holiday,uint8,SMALLINT,,1
+season,,"<p>Season of the year associated with the date (e.g. Winter, Spring..)</p>",,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Date.season,string,STRING,,1
+month,,<p>The month number (1-12)</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Date.month,uint8,SMALLINT,,1
+year,,<p>The four-digit year of the date.</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Date.year,uint16,SMALLINT,,1
+Dim_Station,,"<p>Dimension for station metadata, such as names and locations.</p>",,,,,,,,,,table,clickhouse_warehouse.default.dataeng.Dim_Station,,,,,,
+station_key,,"<p>A unique key for the station, used to join with fact table.</p>",,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Station.station_key,uint64,BIGINT,,1
+station_id,,<p>The station identifier from the source system (Citibike station ID)</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Station.station_id,string,STRING,,1
+station_name,,<p>The name of the station as provided in the source data.</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Station.station_name,string,STRING,,1
+latitude,,<p>The station's latitude coordinate.</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Station.latitude,"decimal<9, 6>",DECIMAL,,1
+longitude,,<p>The station's longitude coordinate.</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Station.longitude,"decimal<9, 6>",DECIMAL,,1
+current_flag,,<p>Indicates whether this is the station's currently active record (1/0) Used for SCD Type 2 history tracking.</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Station.current_flag,uint8,SMALLINT,,1
+valid_from,,<p>The date when this version of the station record became effective.</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Station.valid_from,date,DATE,,1
+valid_to,,<p>The date when this version of the station record stopped being valid.</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Station.valid_to,date,DATE,,1
+Dim_Time,,<p>Static dimension for times. Each row represents a specific time of day.</p>,,,,,,,,,,table,clickhouse_warehouse.default.dataeng.Dim_Time,,,,,,
+time_key,,"<p>A unique surrogate key (HHMMSS) representing a specific time of day, used to join with fact table.</p>",,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Time.time_key,uint64,BIGINT,,1
+hour,,<p>The hour of the day (0-23)</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Time.hour,uint8,SMALLINT,,1
+minute,,<p>The minute within the hour (0-59)</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Time.minute,uint8,SMALLINT,,1
+second,,<p>The second within the minute (0-59)</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Time.second,uint8,SMALLINT,,1
+part_of_day,,"<p>A categorical label describing the time (e.g morning, afternoon, evening, night)</p>",,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Time.part_of_day,string,STRING,,1
+Dim_Weather,,<p>Dimension for weather data. Contains hourly weather observations.</p>,,,,,,,,,,table,clickhouse_warehouse.default.dataeng.Dim_Weather,,,,,,
+weather_key,,"<p>A unique surrogate key (YYYYMMDDHH) for the weather record, used to join with fact table.</p>",,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Weather.weather_key,uint32,INT,,1
+apparent_temp,,"<p>A categorized temperature label (e.g. freezing, cold, mild, warm, hot) based on the measured temperature.</p>",,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Weather.apparent_temp,string,STRING,,1
+humidity_category,,"<p>A category describing humidity levels (e.g dry, comfortable, humid)</p>",,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Weather.humidity_category,string,STRING,,1
+precipitation_probability,,<p>The probability of precipitation expressed as a percentage</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Weather.precipitation_probability,int32,INT,,1
+precipitation_category,,"<p>A categorized precipitation level (e.g. no rain, light rain, heavy rain)</p>",,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Weather.precipitation_category,string,STRING,,1
+cloud_coverage,,<p>Cloud coverage percentage</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Weather.cloud_coverage,int32,INT,,1
+wind_category,,"<p>A category describing wind intensity (calm, breezy, windy)</p>",,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Dim_Weather.wind_category,string,STRING,,1
+Fact_Bike_Trip,,"<p>This table contains the history of every Citibike trip. Each row represents a single ride, when it started and ended, what stations the trip started and ended at, rider and bike type, trip duration and distance, and the weather conditions at the time of the trip. It links to all dimension tables.</p>",,,,,,,,,,table,clickhouse_warehouse.default.dataeng.Fact_Bike_Trip,,,,,,
+trip_id,,<p>A unique identifier for each bike trip.</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Fact_Bike_Trip.trip_id,uint64,BIGINT,,1
+start_date_key,,<p>Foreign key linking the trip's start date to the corresponding date in dim_date</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Fact_Bike_Trip.start_date_key,uint32,INT,,1
+end_date_key,,<p>Foreign key linking the trip's end date to the corresponding date in dim_date</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Fact_Bike_Trip.end_date_key,uint32,INT,,1
+start_time_key,,<p>Foreign key linking the trip's start time to the corresponding date in dim_time</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Fact_Bike_Trip.start_time_key,uint32,INT,,1
+stop_time_key,,<p>Foreign key linking the trip's end time to the corresponding date in dim_time</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Fact_Bike_Trip.stop_time_key,uint32,INT,,1
+start_station_key,,<p>Foreign key referencing the starting station in dim_station</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Fact_Bike_Trip.start_station_key,uint64,BIGINT,,1
+end_station_key,,<p>Foreign key referencing the ending station in dim_station</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Fact_Bike_Trip.end_station_key,uint64,BIGINT,,1
+weather_key,,"<p>Foreign key linking to dim_weather, representing the weather conditions at the start of the trip (to the nearest hour)</p>",,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Fact_Bike_Trip.weather_key,uint32,INT,,1
+rider_type,,<p>Type of rider: member or casual</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Fact_Bike_Trip.rider_type,string,STRING,,1
+bike_type,,"<p>Type of bike used for the trip: classic, electric</p>",,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Fact_Bike_Trip.bike_type,string,STRING,,1
+trip_duration,,<p>Length of the trip in minutes</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Fact_Bike_Trip.trip_duration,float64,DOUBLE,,1
+trip_distance_km,,<p>Estimated distance traveled during the trip in kilometers.</p>,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.Fact_Bike_Trip.trip_distance_km,float64,DOUBLE,,1
+stg_citibike_trips,,,,,,,,,,,,table,clickhouse_warehouse.default.dataeng.stg_citibike_trips,,,,,,
+ride_id,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.stg_citibike_trips.ride_id,string,STRING,,1
+started_at,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.stg_citibike_trips.started_at,datetime64<3>,DATETIME,,1
+ended_at,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.stg_citibike_trips.ended_at,datetime64<3>,DATETIME,,1
+start_station_id,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.stg_citibike_trips.start_station_id,string,STRING,,1
+start_station_name,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.stg_citibike_trips.start_station_name,string,STRING,,1
+start_lat,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.stg_citibike_trips.start_lat,"decimal<9, 6>",DECIMAL,,1
+start_lng,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.stg_citibike_trips.start_lng,"decimal<9, 6>",DECIMAL,,1
+end_station_id,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.stg_citibike_trips.end_station_id,string,STRING,,1
+end_station_name,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.stg_citibike_trips.end_station_name,string,STRING,,1
+end_lat,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.stg_citibike_trips.end_lat,"decimal<9, 6>",DECIMAL,,1
+end_lng,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.stg_citibike_trips.end_lng,"decimal<9, 6>",DECIMAL,,1
+member_casual,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.stg_citibike_trips.member_casual,string,STRING,,1
+rideable_type,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.stg_citibike_trips.rideable_type,string,STRING,,1
+stg_weather,,,,,,,,,,,,table,clickhouse_warehouse.default.dataeng.stg_weather,,,,,,
+apparent_temperature,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.stg_weather.apparent_temperature,float32,FLOAT,,1
+relative_humidity_2m,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.stg_weather.relative_humidity_2m,float32,FLOAT,,1
+precipitation_probability,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.stg_weather.precipitation_probability,float32,FLOAT,,1
+cloud_coverage,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.stg_weather.cloud_coverage,float32,FLOAT,,1
+wind_speed_10m,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.stg_weather.wind_speed_10m,float32,FLOAT,,1
+observation_time,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.stg_weather.observation_time,datetime,DATETIME,,1
+vw_trip_summary_full,,,,,,,,,,,,table,clickhouse_warehouse.default.dataeng.vw_trip_summary_full,,,,,,
+trip_id,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_full.trip_id,uint64,BIGINT,,1
+start_date_key,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_full.start_date_key,uint32,INT,,1
+end_date_key,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_full.end_date_key,uint32,INT,,1
+start_station_name,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_full.start_station_name,string,STRING,,1
+end_station_name,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_full.end_station_name,string,STRING,,1
+rider_type,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_full.rider_type,string,STRING,,1
+bike_type,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_full.bike_type,string,STRING,,1
+trip_duration,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_full.trip_duration,float64,DOUBLE,,1
+apparent_temp,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_full.apparent_temp,string,STRING,,1
+humidity_category,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_full.humidity_category,string,STRING,,1
+wind_category,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_full.wind_category,string,STRING,,1
+vw_trip_summary_limited,,,,,,,,,,,,table,clickhouse_warehouse.default.dataeng.vw_trip_summary_limited,,,,,,
+trip_id,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_limited.trip_id,uint64,BIGINT,,1
+start_date_key,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_limited.start_date_key,uint32,INT,,1
+end_date_key,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_limited.end_date_key,uint32,INT,,1
+start_station_key,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_limited.start_station_key,uint64,BIGINT,,1
+start_station_name,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_limited.start_station_name,fixedstring<16>,STRING,,1
+end_station_key,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_limited.end_station_key,uint64,BIGINT,,1
+end_station_name,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_limited.end_station_name,fixedstring<16>,STRING,,1
+rider_type,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_limited.rider_type,fixedstring<32>,STRING,,1
+bike_type,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_limited.bike_type,string,STRING,,1
+trip_duration,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_limited.trip_duration,float64,DOUBLE,,1
+apparent_temp,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_limited.apparent_temp,string,STRING,,1
+humidity_category,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_limited.humidity_category,string,STRING,,1
+wind_category,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_limited.wind_category,string,STRING,,1
+vw_trip_summary_masked,,,,,,,,,,,,table,clickhouse_warehouse.default.dataeng.vw_trip_summary_masked,,,,,,
+trip_id,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_masked.trip_id,uint64,BIGINT,,1
+start_date_key,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_masked.start_date_key,uint32,INT,,1
+end_date_key,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_masked.end_date_key,uint32,INT,,1
+start_station_name_masked,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_masked.start_station_name_masked,fixedstring<16>,STRING,,1
+end_station_name_masked,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_masked.end_station_name_masked,fixedstring<16>,STRING,,1
+rider_type_masked,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_masked.rider_type_masked,string,STRING,,1
+bike_type_masked,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_masked.bike_type_masked,string,STRING,,1
+trip_duration,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_masked.trip_duration,float64,DOUBLE,,1
+apparent_temp,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_masked.apparent_temp,string,STRING,,1
+humidity_category,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_masked.humidity_category,string,STRING,,1
+wind_category,,,,,,,,,,,,column,clickhouse_warehouse.default.dataeng.vw_trip_summary_masked.wind_category,string,STRING,,1
