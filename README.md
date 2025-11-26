@@ -44,12 +44,41 @@ This repository contains a reproducible data platform that explains how New York
    ```bash
    docker exec -it clickhouse-server clickhouse-client --multiquery --queries-file=/sql/01_create_db_and_tables.sql
    ```
+4. **Create a Clickhouse user for OpenMetadata and Superset**
+   ```bash
+   docker exec -it clickhouse-server clickhouse-client --multiquery --queries-file=/sql/task_3_4_roles.sql
+   ```
+5. **Register ClickHouse as a service in OpenMetadata**
+   
+   Default user and password:
+   + admin@open-metadata.org
+   + admin
+
+   Create Clickhouse service in OMD UI:
+
+   + Settings -> Services -> Databases
+   + Add New Service
+   + Service type: Clickhouse
+   + Service name: e.g. clickhouse_warehouse
+   + Host and Port: clickhouse-server:8123
+   + Username: service_openmetadata
+   + Password: omd_very_secret_password
+   + Test connection, next, save
+
+
 4. **Confirm services**
    ```bash
    docker compose ps
    ```
    - **Airflow UI:** http://localhost:8080 (default user/password `airflow`/`airflow`)
    - **ClickHouse UI:** http://localhost:8123
+   - **OpenMetadata:** http://localhost:8585/
+   - **Superset:** http://localhost:8088/ (default `admin`/`admin`)
+
+
+## OpenMetadata tests
+
+![OpenMetadata tests](docs/omd-tests.png)
 
 
 ## Operating the Pipeline
@@ -192,33 +221,6 @@ All models target the `citibike` ClickHouse database. Profiles are preconfigured
 ├── sample_data/               # Optional seed files for local testing
 └── docs/                      # DAG diagrams and documentation assets
 ```
-
-## OpenMetadata
-
-[OpenMetadata](http://localhost:8585/)
-
-Default user and password:
-+ admin@open-metadata.org
-+ admin
-
-Create a Clickhouse user for OpenMetadata
-
-```bash
-docker exec -it clickhouse-server clickhouse-client --multiquery --queries-file=/sql/task_3_omd_roles.sql
-```
-
-Create Clickhouse service in OMD UI:
-
-+ Settings -> Services -> Databases
-+ Add New Service
-+ Service type: Clickhouse
-+ Service name: e.g. clickhouse_warehouse
-+ Host and Port: clickhouse-server:8123
-+ Username: service_openmetadata
-+ Password: omd_very_secret_password
-+ Test connection, next, save
-
-![OpenMetadata tests](docs/omd-tests.png)
 
 ## Troubleshooting
 
