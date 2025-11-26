@@ -212,3 +212,4 @@ __marimo__/
 logs/
 .user.yml
 docker-volume/
+minio_data/

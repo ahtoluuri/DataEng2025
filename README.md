@@ -49,20 +49,16 @@ This repository contains a reproducible data platform that explains how New York
    docker exec -it clickhouse-server clickhouse-client --multiquery --queries-file=/sql/task_3_4_roles.sql
    ```
 5. **Register ClickHouse as a service in OpenMetadata**
-   
-   Default user and password:
-   + admin@open-metadata.org
-   + admin
 
    Create Clickhouse service in OMD UI:
 
    + Settings -> Services -> Databases
    + Add New Service
-   + Service type: Clickhouse
-   + Service name: e.g. clickhouse_warehouse
-   + Host and Port: clickhouse-server:8123
-   + Username: service_openmetadata
-   + Password: omd_very_secret_password
+   + Service type: `Clickhouse`
+   + Service name: e.g. `clickhouse_warehouse`
+   + Host and Port: `clickhouse-server:8123`
+   + Username: `service_openmetadata`
+   + Password: `omd_very_secret_password`
    + Test connection, next, save
 6. **Connect Superset to ClickHouse**
    + In Superset, go to Settings → Database connections
@@ -77,9 +73,10 @@ This repository contains a reproducible data platform that explains how New York
    docker compose ps
    ```
    - **Airflow UI:** http://localhost:8080 (default user/password `airflow`/`airflow`)
-   - **ClickHouse UI:** http://localhost:8123
-   - **OpenMetadata:** http://localhost:8585/
-   - **Superset:** http://localhost:8088/ (default `admin`/`admin`)
+   - **ClickHouse UI:** http://localhost:8123 (user `admin`)
+   - **OpenMetadata:** http://localhost:8585/ (`admin@open-metadata.org`/`admin`)
+   - **Superset:** http://localhost:8088/ (`admin`/`admin`)
+   - **Minio:** http://localhost:9003/ (`minioadmin`/`minioadmin`)
 
 ## User access rights
 
