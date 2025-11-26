@@ -64,9 +64,15 @@ This repository contains a reproducible data platform that explains how New York
    + Username: service_openmetadata
    + Password: omd_very_secret_password
    + Test connection, next, save
-
-
-4. **Confirm services**
+6. **Connect Superset to ClickHouse**
+   + In Superset, go to Settings → Database connections
+   + Click + Database
+   + Choose ClickHouse Connect as the database type
+   + Credentials: 
+      - Host: `clickhouse-server` (Port 8123, but this should be filled automatically)
+      - Username: `service_superset_full`
+      - Password: `superset_very_secret_password`
+7.  **Confirm services**
    ```bash
    docker compose ps
    ```
@@ -75,6 +81,17 @@ This repository contains a reproducible data platform that explains how New York
    - **OpenMetadata:** http://localhost:8585/
    - **Superset:** http://localhost:8088/ (default `admin`/`admin`)
 
+## User access rights
+
+Create views
+```bash
+docker exec -it clickhouse-server clickhouse-client --multiquery --queries-file=/sql/task_2_analytical_views.sql
+```
+
+Create roles and users
+```bash
+docker exec -it clickhouse-server clickhouse-client --multiquery --queries-file=/sql/task_2_roles_and_users.sql
+```
 
 ## OpenMetadata tests
 
