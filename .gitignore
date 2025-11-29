@@ -213,3 +213,4 @@ logs/
 .user.yml
 docker-volume/
 minio_data/
+clickhouse_data/
