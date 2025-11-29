@@ -25,7 +25,7 @@ def get_file_name(execution_date: datetime, months_ago=1) -> str:
 def download_and_extract(**context) -> None:
     execution_date = context['logical_date']
     hook = ClickHouseHook(clickhouse_conn_id=CLICKHOUSE_CONN_ID)
-
+    months_to_download = []
     for m in [1,2]:
         check_month = (execution_date - relativedelta(months=m))
         month_str = check_month.strftime('%Y%m')
@@ -38,12 +38,14 @@ def download_and_extract(**context) -> None:
         if count > 0:
             print(f"Data for {month_str} already exists in {TABLE_NAME}. Skipping download.")
             context['ti'].xcom_push(key='csv_path', value=None)
-            return
+            #return
+        else:
+            months_to_download.append(m)
     
     response = None
     downloaded_month = None
 
-    for m in [1,2]:
+    for m in months_to_download:
         file_name = get_file_name(execution_date, months_ago=m)
         url = CITIBIKE_BASE_URL + file_name
         print(f"Trying to download {url}")
@@ -58,7 +60,8 @@ def download_and_extract(**context) -> None:
             r.raise_for_status()
     
     if response is None:
-        raise FileNotFoundError("No data found for the last 2 months.")
+        raise AirflowSkipException("Skipping. No months available to download or data is already in database.")
+        #raise FileNotFoundError("No data found for the last 2 months.")
    
     dfs = []
     with zipfile.ZipFile(io.BytesIO(response.content)) as z:
