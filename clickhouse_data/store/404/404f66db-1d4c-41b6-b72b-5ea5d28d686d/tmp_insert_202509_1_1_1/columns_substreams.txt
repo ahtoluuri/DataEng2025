@@ -1,0 +1,30 @@
+columns substreams version: 1
+14 columns:
+1 substreams for column `ride_id`:
+	ride_id
+1 substreams for column `rideable_type`:
+	rideable_type
+1 substreams for column `started_at`:
+	started_at
+1 substreams for column `ended_at`:
+	ended_at
+1 substreams for column `start_station_name`:
+	start_station_name
+1 substreams for column `start_station_id`:
+	start_station_id
+1 substreams for column `end_station_name`:
+	end_station_name
+1 substreams for column `end_station_id`:
+	end_station_id
+1 substreams for column `start_lat`:
+	start_lat
+1 substreams for column `start_lng`:
+	start_lng
+1 substreams for column `end_lat`:
+	end_lat
+1 substreams for column `end_lng`:
+	end_lng
+1 substreams for column `member_casual`:
+	member_casual
+1 substreams for column `loaded_at`:
+	loaded_at
