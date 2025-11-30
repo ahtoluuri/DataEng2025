@@ -45,10 +45,13 @@ This repository contains a reproducible data platform that explains how New York
    ```bash
    cp .env.example .env
    ```
+   ```bash
+   cp docker/.env.example docker/.env
+   ```
    Default credentials are sufficient for local usage.
 2. **Start the stack**
    ```bash
-   docker compose up -d
+   docker compose up -d --build
    ```
 3. **Create base schemas and raw tables**
    ```bash
