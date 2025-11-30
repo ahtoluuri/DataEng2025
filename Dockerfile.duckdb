@@ -9,4 +9,4 @@ RUN pip install duckdb pyarrow pyiceberg pandas
 
 WORKDIR /project
 COPY sample_data/ ./sample_data/
-COPY scripts/ ./scripts/
+#COPY scripts/ ./scripts/

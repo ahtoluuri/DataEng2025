@@ -34,7 +34,7 @@ This repository contains a reproducible data platform that explains how New York
 
 | Service | Purpose | Port(s) |
 | --- | --- | --- |
-| `airflow-webserver`, `airflow-scheduler`, `airflow-db` | Orchestrate and persist Airflow metadata | 8080, 5432 |
+| `airflow-webserver`, `airflow-scheduler`, `airflow-db` | Orchestrate and persist Airflow metadata | 8081, 5432 |
 | `pgadmin` | Optional web UI for PostgreSQL metadata | 5050 |
 | `clickhouse-server` | Columnar warehouse for raw and transformed datasets | 8123 (HTTP), 9001 (native) |
 | `dbt` | Runs dbt commands against ClickHouse | n/a (exec via `docker exec`) |
@@ -45,10 +45,13 @@ This repository contains a reproducible data platform that explains how New York
    ```bash
    cp .env.example .env
    ```
+   ```bash
+   cp docker/.env.example docker/.env
+   ```
    Default credentials are sufficient for local usage.
 2. **Start the stack**
    ```bash
-   docker compose up -d
+   docker compose up -d --build
    ```
 3. **Create base schemas and raw tables**
    ```bash
@@ -94,7 +97,7 @@ This repository contains a reproducible data platform that explains how New York
    ```bash
    docker compose ps
    ```
-   - **Airflow UI:** http://localhost:8080 (default user/password `airflow`/`airflow`)
+   - **Airflow UI:** http://localhost:8081 (default user/password `airflow`/`airflow`)
    - **ClickHouse UI:** http://localhost:8123 (user `admin`)
    - **OpenMetadata:** http://localhost:8585/ (`admin@open-metadata.org`/`admin`)
    - **Superset:** http://localhost:8088/ (`admin`/`admin`)
