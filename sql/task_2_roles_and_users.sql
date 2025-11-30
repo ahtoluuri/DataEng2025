@@ -8,4 +8,5 @@ GRANT analyst_full TO user_full;
 GRANT analyst_limited TO user_limited;
 
 GRANT SELECT ON dataeng.* TO user_full;
+REVOKE SELECT ON dataeng.* FROM user_limited;
 GRANT SELECT ON dataeng.vw_trip_summary_limited TO user_limited;
