@@ -20,15 +20,6 @@ This repository contains a reproducible data platform that explains how New York
 
 <img width="1235" height="598" alt="image" src="docs/architecture.png" />
 
-### Iceberg (bronze landing demo)
-
-- MinIO (`practice-bucket`) and the Iceberg REST catalog (`iceberg_rest`) are included in the compose stack.
-- Airflow DAG `iceberg_bronze_demo` creates a small Iceberg table `bronze.rides_iceberg` via PyIceberg.
-- ClickHouse reads the Iceberg data files through the S3 table function (view `bronze.rides_iceberg_s3`) to avoid the current manifest-field mismatch between ClickHouse 25.10 and PyIceberg.
-- To run the demo end-to-end:
-  1. `docker compose up -d --build` (rebuilds Airflow with PyIceberg support).
-  2. In Airflow UI, trigger `iceberg_bronze_demo`.
-  3. Query from ClickHouse: `SELECT * FROM bronze.rides_iceberg_s3;`.
 
 ### Container Services
 
@@ -55,11 +46,11 @@ This repository contains a reproducible data platform that explains how New York
    ```
 3. **Create base schemas and raw tables**
    ```bash
-   docker exec -it clickhouse-server clickhouse-client --multiquery --queries-file=/sql/01_create_db_and_tables.sql
+   docker exec -it clickhouse-server clickhouse-client --multiquery --queries-file=sql/01_create_db_and_tables.sql
    ```
 4. **Create a Clickhouse user for OpenMetadata and Superset**
    ```bash
-   docker exec -it clickhouse-server clickhouse-client --multiquery --queries-file=/sql/task_3_4_roles.sql
+   docker exec -it clickhouse-server clickhouse-client --multiquery --queries-file=sql/task_3_4_roles.sql
    ```
 5. **Register ClickHouse as a service in OpenMetadata**
 
@@ -107,18 +98,13 @@ This repository contains a reproducible data platform that explains how New York
 
 Create views
 ```bash
-docker exec -it clickhouse-server clickhouse-client --multiquery --queries-file=/sql/task_2_analytical_views.sql
+docker exec -it clickhouse-server clickhouse-client --multiquery --queries-file=sql/task_2_analytical_views.sql
 ```
 
 Create roles and users
 ```bash
-docker exec -it clickhouse-server clickhouse-client --multiquery --queries-file=/sql/task_2_roles_and_users.sql
+docker exec -it clickhouse-server clickhouse-client --multiquery --queries-file=sql/task_2_roles_and_users.sql
 ```
-
-## OpenMetadata tests
-
-![OpenMetadata tests](docs/omd-tests.png)
-
 
 ## Operating the Pipeline
 
@@ -153,6 +139,24 @@ To backfill or test, trigger DAGs manually from the Airflow UI. The `dbt_transfo
 - `marts/Fact_Bike_Trip`: Consolidated fact table joining rides with weather signals and station context.
 
 All models target the `citibike` ClickHouse database. Profiles are preconfigured in `dbt_project/profiles.yml` for the containerised runtime.
+
+### Iceberg (bronze landing demo)
+
+- MinIO (`practice-bucket`) and the Iceberg REST catalog (`iceberg_rest`) are included in the compose stack.
+- Airflow DAG `iceberg_bronze_demo` creates a small Iceberg table `bronze.rides_iceberg` via PyIceberg.
+- ClickHouse reads the Iceberg data files through the S3 table function (view `bronze.rides_iceberg_s3`) to avoid the current manifest-field mismatch between ClickHouse 25.10 and PyIceberg.
+- To run the demo end-to-end:
+  1. `docker compose up -d --build` (rebuilds Airflow with PyIceberg support).
+  2. In Airflow UI, trigger `iceberg_bronze_demo`.
+  3. Query from ClickHouse: `SELECT * FROM bronze.rides_iceberg_s3;`.
+
+## OpenMetadata tests
+
+![OpenMetadata tests](docs/omd-tests.png)
+
+## Superset dashboard
+
+![Superset dashboard](docs/superset_dashboard.png)
 
 ## Exploring the Data
 
