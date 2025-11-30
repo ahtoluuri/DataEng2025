@@ -20,6 +20,16 @@ This repository contains a reproducible data platform that explains how New York
 
 <img width="1235" height="598" alt="image" src="docs/architecture.png" />
 
+### Iceberg (bronze landing demo)
+
+- MinIO (`practice-bucket`) and the Iceberg REST catalog (`iceberg_rest`) are included in the compose stack.
+- Airflow DAG `iceberg_bronze_demo` creates a small Iceberg table `bronze.rides_iceberg` via PyIceberg.
+- ClickHouse reads the Iceberg data files through the S3 table function (view `bronze.rides_iceberg_s3`) to avoid the current manifest-field mismatch between ClickHouse 25.10 and PyIceberg.
+- To run the demo end-to-end:
+  1. `docker compose up -d --build` (rebuilds Airflow with PyIceberg support).
+  2. In Airflow UI, trigger `iceberg_bronze_demo`.
+  3. Query from ClickHouse: `SELECT * FROM bronze.rides_iceberg_s3;`.
+
 ### Container Services
 
 | Service | Purpose | Port(s) |

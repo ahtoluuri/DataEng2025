@@ -4,4 +4,6 @@ RUN pip install --no-cache-dir \
     airflow-clickhouse-plugin \
     pandas \
     requests \
-    clickhouse_driver
+    clickhouse_driver \
+    "pyiceberg[s3fs,rest,pyarrow]==0.6.1" \
+    boto3
