@@ -60,7 +60,19 @@ This repository contains a reproducible data platform that explains how New York
    + Username: `service_openmetadata`
    + Password: `omd_very_secret_password`
    + Test connection, next, save
-6. **Connect Superset to ClickHouse**
+6. **Register Superset as a service in OpenMetadata**
+
+   Create Superset service in OMD UI:
+
+   + Settings -> Services -> Dashboards
+   + Add New Service
+   + Service type: `Superset`
+   + Service name: e.g. `Superset`
+   + Host and Port: `superset:8088`
+   + Username: `admin`
+   + Password: `admin`
+   + Test connection, next, save
+7. **Connect Superset to ClickHouse**
    + In Superset, go to Settings → Database connections
    + Click + Database
    + Choose ClickHouse Connect as the database type
@@ -68,7 +80,7 @@ This repository contains a reproducible data platform that explains how New York
       - Host: `clickhouse-server` (Port 8123, but this should be filled automatically)
       - Username: `service_superset_full`
       - Password: `superset_very_secret_password`
-7.  **Confirm services**
+8.  **Confirm services**
    ```bash
    docker compose ps
    ```
